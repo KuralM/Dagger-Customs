@@ -108,7 +108,6 @@ function Navbar() {
         </div>
 
         <nav className="flex items-center gap-4">
-          {/* <Link to="/admin" className="text-sm text-gray-200 hover:underline">Admin</Link> */}
           <Link to="/admin" className="text-sm text-gray-200 hover:underline">Admin</Link>
           <Link to="/cart" className="relative inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
