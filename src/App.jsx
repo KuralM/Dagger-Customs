@@ -57,8 +57,11 @@ function CartProvider({ children }) {
   const add = (product, qty = 1) => {
     setCart((c) => {
       const next = { ...c };
-      if (next[product.id]) next[product.id].qty += qty;
-      else next[product.id] = { product, qty };
+      if (next[product.id]) {
+        next[product.id] = { ...next[product.id], qty: next[product.id].qty + qty };
+      } else {
+        next[product.id] = { product, qty };
+      }
       return next;
     });
   };
@@ -106,6 +109,7 @@ function Navbar() {
 
         <nav className="flex items-center gap-4">
           {/* <Link to="/admin" className="text-sm text-gray-200 hover:underline">Admin</Link> */}
+          <Link to="/admin" className="text-sm text-gray-200 hover:underline">Admin</Link>
           <Link to="/cart" className="relative inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4" />
@@ -202,7 +206,7 @@ function CartPage() {
           <div className="space-y-4">
             {entries.map(({ product, qty }) => (
               <div key={product.id} className="flex items-center gap-4 bg-white p-4 rounded-xl shadow">
-                <img src={product.image} alt="" className="w-20 h-20 object-contain rounded-md" />
+                <img src="/headphones.svg" alt="" className="w-20 h-20 object-contain rounded-md" />
                 <div className="flex-1">
                   <div className="flex justify-between items-center">
                     <div>
@@ -250,24 +254,42 @@ function CheckoutPage() {
 
   const onChange = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }));
 
+  const isValid = form.name && form.doorNo && form.street && form.area && form.district && form.pincode && form.mobile && form.mobile.length === 10 && /^[0-9]+$/.test(form.mobile) && form.pincode.length === 6 && /^[0-9]+$/.test(form.pincode);
+
+  const handleProceed = () => {
+    if (isValid) {
+      navigate('/payment', { state: { address: form } });
+    }
+  };
+
   return (
     <main className="min-h-screen p-6 bg-gray-50">
       <div className="max-w-3xl mx-auto bg-white p-6 rounded-xl shadow">
         <h2 className="text-2xl font-bold mb-4">Delivery Details</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <input placeholder="Name" value={form.name} onChange={onChange('name')} className="p-3 border rounded" />
-          <input placeholder="Mobile No" value={form.mobile} onChange={onChange('mobile')} className="p-3 border rounded" />
-          <input placeholder="Door No" value={form.doorNo} onChange={onChange('doorNo')} className="p-3 border rounded" />
-          <input placeholder="Street" value={form.street} onChange={onChange('street')} className="p-3 border rounded" />
-          <input placeholder="Area" value={form.area} onChange={onChange('area')} className="p-3 border rounded" />
-          <input placeholder="District" value={form.district} onChange={onChange('district')} className="p-3 border rounded" />
-          <input placeholder="Pincode" value={form.pincode} onChange={onChange('pincode')} className="p-3 border rounded" />
-          <input placeholder="Land mark" value={form.landmark} onChange={onChange('landmark')} className="p-3 border rounded" />
+          <input placeholder="Name *" value={form.name} onChange={onChange('name')} className="p-3 border rounded" required />
+          <input placeholder="+91 Mobile No *" value={form.mobile} onChange={onChange('mobile')} className="p-3 border rounded" maxLength="10" pattern="[0-9]{10}" required />
+          <input placeholder="Door No *" value={form.doorNo} onChange={onChange('doorNo')} className="p-3 border rounded" required />
+          <input placeholder="Street *" value={form.street} onChange={onChange('street')} className="p-3 border rounded" required />
+          <input placeholder="Area *" value={form.area} onChange={onChange('area')} className="p-3 border rounded" required />
+          <input placeholder="District *" value={form.district} onChange={onChange('district')} className="p-3 border rounded" required />
+          <input placeholder="Pincode *" value={form.pincode} onChange={onChange('pincode')} className="p-3 border rounded" maxLength="6" pattern="[0-9]{6}" required />
+          <input placeholder="Landmark" value={form.landmark} onChange={onChange('landmark')} className="p-3 border rounded" />
         </div>
 
         <div className="mt-6 flex justify-end gap-3">
           <button onClick={() => navigate(-1)} className="px-4 py-2 border rounded">Back</button>
-          <button onClick={() => navigate('/payment', { state: { address: form } })} className="px-4 py-2 bg-indigo-600 text-white rounded">Proceed to Payment</button>
+          <button 
+            onClick={handleProceed} 
+            disabled={!isValid}
+            className={`px-4 py-2 rounded ${
+              isValid 
+                ? 'bg-indigo-600 text-white hover:bg-indigo-700' 
+                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+            }`}
+          >
+            Proceed to Payment
+          </button>
         </div>
       </div>
     </main>
@@ -278,7 +300,14 @@ function FakeQR({ type = 'PhonePe / GPay' }) {
   return (
     <div className="flex flex-col items-center gap-4">
       <div className="bg-white p-4 rounded-lg shadow-md" style={{ width: 260 }}>
-        <img src="/qr-placeholder.png" alt="QR" className="w-full h-full object-contain" onError={(e)=>{e.target.src='https://via.placeholder.com/220'}} />
+        <img 
+          src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi://pay?pa=merchant@paytm&pn=Dagger%20Customs&am=1&cu=INR" 
+          alt="QR Code" 
+          className="w-full h-full object-contain" 
+          onError={(e) => {
+            e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2Y4ZjlmYSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM2YjczODAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5RUiBDb2RlPC90ZXh0Pjwvc3ZnPg==';
+          }}
+        />
       </div>
       <div className="text-sm text-gray-600">Scan with {type}</div>
     </div>
@@ -291,24 +320,54 @@ function PaymentPage() {
   const location = useLocation();
   const total = calcTotal(cart);
   const [paid, setPaid] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState('UPI');
 
-  const doPay = () => {
+  const doPay = async () => {
     setPaid(true);
-    const orders = JSON.parse(localStorage.getItem('orders_v2') || '[]');
+    const orderId = `ord_${Date.now()}`;
+    const paymentId = `pay_${Date.now()}`;
+    
     const order = {
-      id: `ord_${Date.now()}`,
-      items: Object.values(cart).map(it => ({ id: it.product.id, name: it.product.name, desc: it.product.description, qty: it.qty })),
+      id: orderId,
+      items: Object.values(cart).map(it => ({ 
+        id: it.product.id, 
+        name: it.product.name, 
+        desc: it.product.description, 
+        price: it.product.price,
+        qty: it.qty 
+      })),
       total,
       address: (location.state && location.state.address) || {},
+      paymentMethod,
+      paymentId,
+      status: 'completed',
       createdAt: new Date().toISOString(),
     };
+
+    // Store in localStorage
+    const orders = JSON.parse(localStorage.getItem('orders_v2') || '[]');
     orders.push(order);
     localStorage.setItem('orders_v2', JSON.stringify(orders));
+
+    // Save order to JSON file
+    await saveOrderToFile(order);
 
     setTimeout(() => {
       clear();
       navigate('/success');
     }, 1800);
+  };
+
+  const saveOrderToFile = async (orderData) => {
+    const blob = new Blob([JSON.stringify(orderData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `order_${orderData.id}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -319,10 +378,20 @@ function PaymentPage() {
           <div>
             <div className="mb-2">Order total</div>
             <div className="text-3xl font-bold mb-6">{currency(total)}</div>
-            <div className="mb-4">Choose a QR to pay</div>
-            <div className="flex gap-3">
-              <button className="px-4 py-2 border rounded">PhonePe</button>
-              <button className="px-4 py-2 border rounded">GPay</button>
+            <div className="mb-4">Payment Method</div>
+            <div className="flex gap-3 mb-4">
+              <button 
+                onClick={() => setPaymentMethod('UPI')} 
+                className={`px-4 py-2 border rounded ${paymentMethod === 'UPI' ? 'bg-indigo-600 text-white' : ''}`}
+              >
+                UPI
+              </button>
+              <button 
+                onClick={() => setPaymentMethod('Card')} 
+                className={`px-4 py-2 border rounded ${paymentMethod === 'Card' ? 'bg-indigo-600 text-white' : ''}`}
+              >
+                Card
+              </button>
             </div>
           </div>
 
@@ -376,46 +445,128 @@ function SuccessPage() {
 
 function AdminPage() {
   const [orders, setOrders] = useState(() => JSON.parse(localStorage.getItem('orders_v2') || '[]'));
+  const [payments, setPayments] = useState(() => JSON.parse(localStorage.getItem('payments_v2') || '[]'));
+  const [activeTab, setActiveTab] = useState('orders');
 
   useEffect(() => {
-    const onStorage = () => setOrders(JSON.parse(localStorage.getItem('orders_v2') || '[]'));
+    const onStorage = () => {
+      setOrders(JSON.parse(localStorage.getItem('orders_v2') || '[]'));
+      setPayments(JSON.parse(localStorage.getItem('payments_v2') || '[]'));
+    };
     window.addEventListener('storage', onStorage);
     return () => window.removeEventListener('storage', onStorage);
   }, []);
 
+  const exportPayments = () => {
+    const blob = new Blob([JSON.stringify(payments, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `all_payments_${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <main className="min-h-screen p-6 bg-gray-50">
       <div className="max-w-5xl mx-auto">
-        <h2 className="text-2xl font-bold mb-4">Admin — Placed Orders</h2>
-        {orders.length === 0 ? (
-          <div className="p-6 bg-white rounded-xl shadow">No orders yet.</div>
-        ) : (
-          <div className="space-y-4">
-            {orders.map(o => (
-              <div key={o.id} className="bg-white p-4 rounded-xl shadow">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <div className="font-semibold">Order {o.id}</div>
-                    <div className="text-sm text-gray-500">{new Date(o.createdAt).toLocaleString()}</div>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-2xl font-bold">Admin Dashboard</h2>
+          <button onClick={exportPayments} className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+            Export Payments JSON
+          </button>
+        </div>
+        
+        <div className="flex gap-4 mb-6">
+          <button 
+            onClick={() => setActiveTab('orders')} 
+            className={`px-4 py-2 rounded ${activeTab === 'orders' ? 'bg-indigo-600 text-white' : 'bg-white border'}`}
+          >
+            Orders ({orders.length})
+          </button>
+          <button 
+            onClick={() => setActiveTab('payments')} 
+            className={`px-4 py-2 rounded ${activeTab === 'payments' ? 'bg-indigo-600 text-white' : 'bg-white border'}`}
+          >
+            Payments ({payments.length})
+          </button>
+        </div>
+
+        {activeTab === 'orders' && (
+          <div>
+            {orders.length === 0 ? (
+              <div className="p-6 bg-white rounded-xl shadow">No orders yet.</div>
+            ) : (
+              <div className="space-y-4">
+                {orders.map(o => (
+                  <div key={o.id} className="bg-white p-4 rounded-xl shadow">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <div className="font-semibold">Order {o.id}</div>
+                        <div className="text-sm text-gray-500">{new Date(o.createdAt).toLocaleString()}</div>
+                        {o.paymentId && <div className="text-xs text-blue-600">Payment ID: {o.paymentId}</div>}
+                      </div>
+                      <div className="font-bold">{currency(o.total)}</div>
+                    </div>
+
+                    <div className="mt-3">
+                      <div className="font-medium">Customer Address</div>
+                      <div className="text-sm text-gray-600">{o.address?.name} — {o.address?.doorNo} {o.address?.street} {o.address?.area} {o.address?.district} - {o.address?.pincode} | {o.address?.mobile}</div>
+                    </div>
+
+                    <div className="mt-3">
+                      <div className="font-medium">Items</div>
+                      <ul className="mt-2 list-disc pl-5 text-sm text-gray-700">
+                        {o.items.map((it, idx) => (
+                          <li key={idx}>{it.name} — {it.desc} (qty: {it.qty})</li>
+                        ))}
+                      </ul>
+                    </div>
                   </div>
-                  <div className="font-bold">{currency(o.total)}</div>
-                </div>
-
-                <div className="mt-3">
-                  <div className="font-medium">Customer Address</div>
-                  <div className="text-sm text-gray-600">{o.address?.name} — {o.address?.doorNo} {o.address?.street} {o.address?.area} {o.address?.district} - {o.address?.pincode} | {o.address?.mobile}</div>
-                </div>
-
-                <div className="mt-3">
-                  <div className="font-medium">Items</div>
-                  <ul className="mt-2 list-disc pl-5 text-sm text-gray-700">
-                    {o.items.map((it, idx) => (
-                      <li key={idx}>{it.name} — {it.desc} (qty: {it.qty})</li>
-                    ))}
-                  </ul>
-                </div>
+                ))}
               </div>
-            ))}
+            )}
+          </div>
+        )}
+
+        {activeTab === 'payments' && (
+          <div>
+            {payments.length === 0 ? (
+              <div className="p-6 bg-white rounded-xl shadow">No payments yet.</div>
+            ) : (
+              <div className="space-y-4">
+                {payments.map(p => (
+                  <div key={p.paymentId} className="bg-white p-4 rounded-xl shadow">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <div className="font-semibold">Payment {p.paymentId}</div>
+                        <div className="text-sm text-gray-500">{new Date(p.timestamp).toLocaleString()}</div>
+                        <div className="text-sm text-blue-600">Order: {p.orderId}</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-bold">{currency(p.amount)}</div>
+                        <div className={`text-sm px-2 py-1 rounded ${p.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                          {p.status}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-3 grid grid-cols-2 gap-4">
+                      <div>
+                        <div className="font-medium">Payment Method</div>
+                        <div className="text-sm text-gray-600">{p.method}</div>
+                      </div>
+                      <div>
+                        <div className="font-medium">Customer</div>
+                        <div className="text-sm text-gray-600">{p.customerInfo?.name} | {p.customerInfo?.mobile}</div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>
