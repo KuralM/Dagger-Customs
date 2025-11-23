@@ -349,7 +349,7 @@ function PaymentPage() {
     localStorage.setItem('orders_v2', JSON.stringify(orders));
 
     // Save order to JSON file
-    await saveOrderToFile(order);
+    // await saveOrderToFile(order);
 
     setTimeout(() => {
       clear();
