@@ -1,0 +1,18 @@
+<svg width="300" height="300" xmlns="http://www.w3.org/2000/svg">
+  <rect width="300" height="300" fill="#f8f9fa"/>
+  <!-- Speaker body -->
+  <rect x="100" y="100" width="100" height="120" rx="15" fill="#2c3e50" stroke="#1a252f" stroke-width="3"/>
+  <!-- Main speaker -->
+  <circle cx="150" cy="140" r="25" fill="#34495e" stroke="#7f8c8d" stroke-width="2"/>
+  <circle cx="150" cy="140" r="15" fill="#e74c3c"/>
+  <circle cx="150" cy="140" r="8" fill="#c0392b"/>
+  <!-- Tweeter -->
+  <circle cx="150" cy="185" r="12" fill="#34495e" stroke="#7f8c8d" stroke-width="2"/>
+  <circle cx="150" cy="185" r="6" fill="#f39c12"/>
+  <!-- Control buttons -->
+  <circle cx="125" cy="110" r="4" fill="#3498db"/>
+  <circle cx="150" cy="110" r="4" fill="#e67e22"/>
+  <circle cx="175" cy="110" r="4" fill="#27ae60"/>
+  <!-- Brand text -->
+  <text x="150" y="250" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#2c3e50">Comet</text>
+</svg>

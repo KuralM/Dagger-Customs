@@ -1,0 +1,18 @@
+<svg width="300" height="300" xmlns="http://www.w3.org/2000/svg">
+  <rect width="300" height="300" fill="#f8f9fa"/>
+  <!-- Watch band -->
+  <rect x="130" y="60" width="40" height="180" rx="20" fill="#34495e"/>
+  <!-- Watch face -->
+  <rect x="110" y="120" width="80" height="60" rx="15" fill="#2c3e50" stroke="#1a252f" stroke-width="2"/>
+  <!-- Screen -->
+  <rect x="120" y="130" width="60" height="40" rx="8" fill="#3498db"/>
+  <!-- Screen elements -->
+  <circle cx="135" cy="145" r="3" fill="#ffffff"/>
+  <rect x="145" y="140" width="25" height="3" fill="#ffffff"/>
+  <rect x="145" y="150" width="20" height="2" fill="#ecf0f1"/>
+  <rect x="145" y="155" width="15" height="2" fill="#ecf0f1"/>
+  <!-- Crown -->
+  <rect x="190" y="145" width="8" height="10" rx="2" fill="#7f8c8d"/>
+  <!-- Brand text -->
+  <text x="150" y="220" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#2c3e50">Nimbus</text>
+</svg>

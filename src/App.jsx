@@ -1,0 +1,476 @@
+import React, { useState, useEffect, createContext, useContext } from "react";
+import { BrowserRouter as Router, Routes, Route, Link, useNavigate, useLocation } from "react-router-dom";
+
+// -----------------------------
+// Single-file React SPA (App.jsx)
+// - Reads products from /public/products.json (fetch)
+// - Persists orders in localStorage (simulates orders.json)
+// - No backend required
+// - Tailwind CSS classes used for styling
+// -----------------------------
+
+const SAMPLE_PRODUCTS = [
+  {
+    id: "p1",
+    name: "Aurora Headphones",
+    price: 2499,
+    image: "/headphones.svg",
+    description: "Comfortable over-ear wireless headphones with noise cancellation.",
+  },
+  {
+    id: "p2",
+    name: "Nimbus Smartwatch",
+    price: 3499,
+    image: "/smartwatch.svg",
+    description: "Health tracking, notifications and long battery life.",
+  },
+  {
+    id: "p3",
+    name: "Comet Portable Speaker",
+    price: 1299,
+    image: "/speaker.svg",
+    description: "Rugged, waterproof bluetooth speaker with punchy bass.",
+  },
+];
+
+// -----------------------------
+// Cart context
+// -----------------------------
+const CartContext = createContext();
+function useCart() {
+  return useContext(CartContext);
+}
+
+function CartProvider({ children }) {
+  const [cart, setCart] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("cart_v2")) || {};
+    } catch (e) {
+      return {};
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem("cart_v2", JSON.stringify(cart));
+  }, [cart]);
+
+  const add = (product, qty = 1) => {
+    setCart((c) => {
+      const next = { ...c };
+      if (next[product.id]) next[product.id].qty += qty;
+      else next[product.id] = { product, qty };
+      return next;
+    });
+  };
+  const setQty = (productId, qty) => {
+    setCart((c) => {
+      const next = { ...c };
+      if (!next[productId]) return next;
+      next[productId].qty = Math.max(0, qty);
+      if (next[productId].qty === 0) delete next[productId];
+      return next;
+    });
+  };
+  const clear = () => setCart({});
+  const remove = (productId) => {
+    setCart((c) => {
+      const next = { ...c };
+      delete next[productId];
+      return next;
+    });
+  };
+
+  return <CartContext.Provider value={{ cart, add, setQty, clear, remove }}>{children}</CartContext.Provider>;
+}
+
+const currency = (n) => `₹${n.toFixed(2)}`;
+const calcTotal = (cart) => Object.values(cart).reduce((s, it) => s + it.product.price * it.qty, 0);
+
+// -----------------------------
+// Navbar (logo in circle at left, cart on right)
+// -----------------------------
+function Navbar() {
+  const { cart } = useCart();
+  console.log(cart);
+  const items = Object.values(cart).reduce((s, i) => s + i.qty, 0);
+  return (
+    <header className="w-full bg-gradient-to-r from-indigo-600 to-pink-500 text-white px-6 py-4 justify-between items-center shadow-lg" style={{ backgroundColor: '#f1efdc' }}>
+      <div className="max-w-6xl mx-auto flex items-center justify-between p-4">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-yellow-300 to-orange-400 overflow-hidden flex items-center justify-center shadow-md">
+            {/* Place your logo at public/logo.png */}
+            <img src="/logo.svg" alt="Dagger Customs" className="w-10 h-10 object-contain" />
+          </div>
+          <Link to="/" className="text-xl font-semibold text-gray-100">Dagger Customs</Link>
+        </div>
+
+        <nav className="flex items-center gap-4">
+          {/* <Link to="/admin" className="text-sm text-gray-200 hover:underline">Admin</Link> */}
+          <Link to="/cart" className="relative inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4" />
+            </svg>
+            <span className="text-sm text-gray-800">Cart</span>
+            {items > 0 && <span className="ml-1 inline-flex items-center justify-center w-6 h-6 text-xs font-medium bg-indigo-600 text-white rounded-full shadow-sm">{items}</span>}
+          </Link>
+        </nav>
+      </div>
+    </header>
+  );
+}
+
+// -----------------------------
+// Product row card (image left, details right)
+// -----------------------------
+function ProductRow({ product }) {
+  const { add } = useCart();
+
+
+  return (
+    <div className="bg-white rounded-xl shadow-lg p-4 flex gap-4 items-start">
+      <div className="w-28 h-28 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center">
+        <img src="/headphones.svg" alt={product.name} className="w-24 h-24 object-contain" />
+      </div>
+
+      <div className="flex-1 flex flex-col">
+        <div className="flex items-start justify-between">
+          <h3 className="text-lg font-semibold text-gray-800">{product.name}</h3>
+          <div className="text-lg font-bold text-indigo-600">{currency(product.price)}</div>
+        </div>
+
+        <p className="mt-2 text-gray-600">{product.description}</p>
+
+        <div className="mt-3">
+          <button onClick={() => add(product)} className="bg-gradient-to-r from-indigo-600 to-teal-400 text-white px-4 py-2 rounded-lg shadow hover:scale-105 transition-transform">Add to Cart</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// -----------------------------
+// Pages
+// -----------------------------
+
+function ProductsPage() {
+  const [products, setProducts] = useState([]);
+
+  useEffect(() => {
+    let mounted = true;
+    fetch('/products.json')
+      .then((r) => {
+        if (!r.ok) throw new Error('not found');
+        return r.json();
+      })
+      .then((data) => {
+        if (mounted && Array.isArray(data)) setProducts(data);
+      })
+      .catch(() => {
+        // fallback to sample
+        if (mounted) setProducts(SAMPLE_PRODUCTS);
+      });
+    return () => (mounted = false);
+  }, []);
+
+  return (
+    <main style={{ backgroundColor: '#e3e0bc' }} className="min-h-screen p-6">
+      <div className="max-w-5xl mx-auto">
+        <h2 className="text-2xl font-bold mb-4">Products</h2>
+        <div className="space-y-4">
+          {products.map((p) => (
+            <ProductRow key={p.id || p.name} product={p} />
+          ))}
+        </div>
+      </div>
+    </main>
+  );
+}
+
+function CartPage() {
+  const { cart, setQty, remove, clear } = useCart();
+  const navigate = useNavigate();
+  const entries = Object.values(cart);
+  const total = calcTotal(cart);
+
+  return (
+    <main className="min-h-screen p-6 bg-gray-50">
+      <div className="max-w-4xl mx-auto">
+        <h2 className="text-2xl font-bold mb-4">Your Cart</h2>
+        {entries.length === 0 ? (
+          <div className="p-6 bg-white rounded-xl shadow">Your cart is empty — <Link to="/">shop now</Link></div>
+        ) : (
+          <div className="space-y-4">
+            {entries.map(({ product, qty }) => (
+              <div key={product.id} className="flex items-center gap-4 bg-white p-4 rounded-xl shadow">
+                <img src={product.image} alt="" className="w-20 h-20 object-contain rounded-md" />
+                <div className="flex-1">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <div className="font-semibold">{product.name}</div>
+                      <div className="text-sm text-gray-500">{product.description}</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-bold">{currency(product.price)}</div>
+                      <div className="text-sm text-gray-500">{currency(product.price * qty)}</div>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 flex items-center gap-2">
+                    <button onClick={() => setQty(product.id, qty - 1)} className="px-3 py-1 border rounded">-</button>
+                    <div className="px-3 py-1 border rounded">{qty}</div>
+                    <button onClick={() => setQty(product.id, qty + 1)} className="px-3 py-1 border rounded">+</button>
+                    <button onClick={() => remove(product.id)} className="ml-auto text-sm text-red-500">Remove</button>
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            <div className="bg-white p-4 rounded-xl shadow flex justify-between items-center">
+              <div className="text-lg font-semibold">Total: {currency(total)}</div>
+              <div className="flex gap-3">
+                <button onClick={() => clear()} className="px-4 py-2 border rounded">Clear</button>
+                <button onClick={() => navigate('/checkout')} className="px-4 py-2 bg-indigo-600 text-white rounded">Place Order</button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </main>
+  );
+}
+
+function CheckoutPage() {
+  const { cart } = useCart();
+  const navigate = useNavigate();
+  const [form, setForm] = useState({ name: '', doorNo: '', street: '', area: '', district: '', pincode: '', landmark: '', mobile: '' });
+
+  useEffect(() => {
+    if (Object.keys(cart).length === 0) navigate('/');
+  }, [cart, navigate]);
+
+  const onChange = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }));
+
+  return (
+    <main className="min-h-screen p-6 bg-gray-50">
+      <div className="max-w-3xl mx-auto bg-white p-6 rounded-xl shadow">
+        <h2 className="text-2xl font-bold mb-4">Delivery Details</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <input placeholder="Name" value={form.name} onChange={onChange('name')} className="p-3 border rounded" />
+          <input placeholder="Mobile No" value={form.mobile} onChange={onChange('mobile')} className="p-3 border rounded" />
+          <input placeholder="Door No" value={form.doorNo} onChange={onChange('doorNo')} className="p-3 border rounded" />
+          <input placeholder="Street" value={form.street} onChange={onChange('street')} className="p-3 border rounded" />
+          <input placeholder="Area" value={form.area} onChange={onChange('area')} className="p-3 border rounded" />
+          <input placeholder="District" value={form.district} onChange={onChange('district')} className="p-3 border rounded" />
+          <input placeholder="Pincode" value={form.pincode} onChange={onChange('pincode')} className="p-3 border rounded" />
+          <input placeholder="Land mark" value={form.landmark} onChange={onChange('landmark')} className="p-3 border rounded" />
+        </div>
+
+        <div className="mt-6 flex justify-end gap-3">
+          <button onClick={() => navigate(-1)} className="px-4 py-2 border rounded">Back</button>
+          <button onClick={() => navigate('/payment', { state: { address: form } })} className="px-4 py-2 bg-indigo-600 text-white rounded">Proceed to Payment</button>
+        </div>
+      </div>
+    </main>
+  );
+}
+
+function FakeQR({ type = 'PhonePe / GPay' }) {
+  return (
+    <div className="flex flex-col items-center gap-4">
+      <div className="bg-white p-4 rounded-lg shadow-md" style={{ width: 260 }}>
+        <img src="/qr-placeholder.png" alt="QR" className="w-full h-full object-contain" onError={(e)=>{e.target.src='https://via.placeholder.com/220'}} />
+      </div>
+      <div className="text-sm text-gray-600">Scan with {type}</div>
+    </div>
+  );
+}
+
+function PaymentPage() {
+  const { cart, clear } = useCart();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const total = calcTotal(cart);
+  const [paid, setPaid] = useState(false);
+
+  const doPay = () => {
+    setPaid(true);
+    const orders = JSON.parse(localStorage.getItem('orders_v2') || '[]');
+    const order = {
+      id: `ord_${Date.now()}`,
+      items: Object.values(cart).map(it => ({ id: it.product.id, name: it.product.name, desc: it.product.description, qty: it.qty })),
+      total,
+      address: (location.state && location.state.address) || {},
+      createdAt: new Date().toISOString(),
+    };
+    orders.push(order);
+    localStorage.setItem('orders_v2', JSON.stringify(orders));
+
+    setTimeout(() => {
+      clear();
+      navigate('/success');
+    }, 1800);
+  };
+
+  return (
+    <main className="min-h-screen p-6 bg-gray-50 flex items-start">
+      <div className="max-w-3xl mx-auto bg-white p-6 rounded-xl shadow w-full">
+        <h2 className="text-2xl font-bold mb-4">Payment</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <div className="mb-2">Order total</div>
+            <div className="text-3xl font-bold mb-6">{currency(total)}</div>
+            <div className="mb-4">Choose a QR to pay</div>
+            <div className="flex gap-3">
+              <button className="px-4 py-2 border rounded">PhonePe</button>
+              <button className="px-4 py-2 border rounded">GPay</button>
+            </div>
+          </div>
+
+          <div className="flex flex-col items-center justify-center">
+            {!paid ? (
+              <div>
+                <FakeQR />
+                <div className="mt-4 text-sm text-gray-500">After completing payment, click below</div>
+                <div className="mt-4">
+                  <button onClick={doPay} className="px-4 py-2 bg-green-600 text-white rounded">I have paid</button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center gap-3">
+                <div className="w-24 h-24 rounded-full bg-green-100 flex items-center justify-center">
+                  <svg viewBox="0 0 24 24" className="w-12 h-12 text-green-600" fill="none" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <div className="text-lg font-semibold text-green-700">Payment Successful</div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </main>
+  );
+}
+
+function SuccessPage() {
+  const navigate = useNavigate();
+  useEffect(() => {
+    const t = setTimeout(() => navigate('/'), 2000);
+    return () => clearTimeout(t);
+  }, [navigate]);
+
+  return (
+    <main className="min-h-screen p-6 bg-gray-50 flex items-center justify-center">
+      <div className="bg-white p-8 rounded-2xl shadow text-center">
+        <div className="w-24 h-24 rounded-full bg-green-50 flex items-center justify-center mx-auto mb-4">
+          <svg viewBox="0 0 24 24" className="w-12 h-12 text-green-600" fill="none" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+        <h3 className="text-xl font-bold">Order Placed</h3>
+        <p className="mt-2 text-gray-600">Thanks! Redirecting to products...</p>
+      </div>
+    </main>
+  );
+}
+
+function AdminPage() {
+  const [orders, setOrders] = useState(() => JSON.parse(localStorage.getItem('orders_v2') || '[]'));
+
+  useEffect(() => {
+    const onStorage = () => setOrders(JSON.parse(localStorage.getItem('orders_v2') || '[]'));
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
+
+  return (
+    <main className="min-h-screen p-6 bg-gray-50">
+      <div className="max-w-5xl mx-auto">
+        <h2 className="text-2xl font-bold mb-4">Admin — Placed Orders</h2>
+        {orders.length === 0 ? (
+          <div className="p-6 bg-white rounded-xl shadow">No orders yet.</div>
+        ) : (
+          <div className="space-y-4">
+            {orders.map(o => (
+              <div key={o.id} className="bg-white p-4 rounded-xl shadow">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <div className="font-semibold">Order {o.id}</div>
+                    <div className="text-sm text-gray-500">{new Date(o.createdAt).toLocaleString()}</div>
+                  </div>
+                  <div className="font-bold">{currency(o.total)}</div>
+                </div>
+
+                <div className="mt-3">
+                  <div className="font-medium">Customer Address</div>
+                  <div className="text-sm text-gray-600">{o.address?.name} — {o.address?.doorNo} {o.address?.street} {o.address?.area} {o.address?.district} - {o.address?.pincode} | {o.address?.mobile}</div>
+                </div>
+
+                <div className="mt-3">
+                  <div className="font-medium">Items</div>
+                  <ul className="mt-2 list-disc pl-5 text-sm text-gray-700">
+                    {o.items.map((it, idx) => (
+                      <li key={idx}>{it.name} — {it.desc} (qty: {it.qty})</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </main>
+  );
+}
+
+export default function App() {
+  return (
+    <Router>
+      <CartProvider>
+        <div className="min-h-screen font-sans text-gray-900">
+          <Navbar />
+          <Routes>
+            <Route path="/" element={<ProductsPage />} />
+            <Route path="/cart" element={<CartPage />} />
+            <Route path="/checkout" element={<CheckoutPage />} />
+            <Route path="/payment" element={<PaymentPage />} />
+            <Route path="/success" element={<SuccessPage />} />
+            <Route path="/admin" element={<AdminPage />} />
+          </Routes>
+        </div>
+      </CartProvider>
+    </Router>
+  );
+}
+
+/*
+  --------------------------
+  How to use this single-file app
+  --------------------------
+  1) Place this file as src/App.jsx in a React project (Vite or CRA).
+  2) Ensure react-router-dom is installed.
+  3) Tailwind CSS classes are used in the markup. If you don't use Tailwind, you'll still get a functional app but styles will differ.
+
+  4) Create a public/products.json file with your product data. Example:
+
+  [
+    {
+      "id": "p1",
+      "name": "Aurora Headphones",
+      "price": 2499,
+      "image": "https://...",
+      "description": "Comfortable over-ear..."
+    }
+  ]
+
+  5) You can add a logo at public/logo.png and an optional QR image at public/qr-placeholder.png.
+
+  6) Orders are saved to localStorage under key "orders_v2" (this simulates orders.json). The Admin page reads from that key.
+
+  7) Run with Vite: npm create vite@latest my-shop --template react
+    then replace src/App.jsx with this file, npm install, npm run dev.
+
+  ---- Notes ----
+  - No backend used. Browser cannot write files to disk; localStorage is used to persist orders.
+  - If fetch('/products.json') fails, the app falls back to SAMPLE_PRODUCTS declared in this file.
+*/

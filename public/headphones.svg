@@ -1,0 +1,16 @@
+<svg width="300" height="300" xmlns="http://www.w3.org/2000/svg">
+  <rect width="300" height="300" fill="#f8f9fa"/>
+  <!-- Headband -->
+  <path d="M80 120 Q150 80 220 120" stroke="#2c3e50" stroke-width="8" fill="none"/>
+  <!-- Left ear cup -->
+  <circle cx="80" cy="140" r="35" fill="#34495e" stroke="#2c3e50" stroke-width="3"/>
+  <circle cx="80" cy="140" r="25" fill="#e74c3c"/>
+  <!-- Right ear cup -->
+  <circle cx="220" cy="140" r="35" fill="#34495e" stroke="#2c3e50" stroke-width="3"/>
+  <circle cx="220" cy="140" r="25" fill="#e74c3c"/>
+  <!-- Connecting wires -->
+  <line x1="80" y1="105" x2="80" y2="105" stroke="#2c3e50" stroke-width="4"/>
+  <line x1="220" y1="105" x2="220" y2="105" stroke="#2c3e50" stroke-width="4"/>
+  <!-- Brand text -->
+  <text x="150" y="220" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#2c3e50">Aurora</text>
+</svg>
