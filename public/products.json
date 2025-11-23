@@ -1,23 +1,23 @@
 [
   {
     "id": "p1",
-    "name": "Aurora Headphones",
-    "price": 2499,
-    "image": "https://images.unsplash.com/photo-1518444020106-4d29a0ff5f2d?q=80&w=800&auto=format&fit=crop&ixlib=rb-4.0.3&s=1",
+    "name": "Pilot V7",
+    "price": 70,
+    "image": "/da.png",
     "description": "Comfortable over-ear wireless headphones with noise cancellation."
   },
   {
     "id": "p2",
-    "name": "Nimbus Smartwatch",
-    "price": 3499,
-    "image": "https://images.unsplash.com/photo-1517686469429-8e2f2f8f1b2e?q=80&w=800&auto=format&fit=crop&ixlib=rb-4.0.3&s=2",
+    "name": "Pilot Juice Up",
+    "price": 370,
+    "image": "da2.png",
     "description": "Health tracking, notifications and long battery life."
   },
   {
     "id": "p3",
-    "name": "Comet Portable Speaker",
-    "price": 1299,
-    "image": "https://images.unsplash.com/photo-1584944821519-4b7b6b0e8d2e?q=80&w=800&auto=format&fit=crop&ixlib=rb-4.0.3&s=3",
+    "name": "Camlin Whiteout",
+    "price": 40,
+    "image": "da3.png",
     "description": "Rugged, waterproof bluetooth speaker with punchy bass."
   }
 ]

@@ -14,7 +14,7 @@ const SAMPLE_PRODUCTS = [
     id: "p1",
     name: "Aurora Headphones",
     price: 2499,
-    image: "/headphones.svg",
+    image: "/dagger2.png",
     description: "Comfortable over-ear wireless headphones with noise cancellation.",
   },
   {
@@ -132,7 +132,7 @@ function ProductRow({ product }) {
   return (
     <div className="bg-white rounded-xl shadow-lg p-4 flex gap-4 items-start">
       <div className="w-28 h-28 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center">
-        <img src="/headphones.svg" alt={product.name} className="w-24 h-24 object-contain" />
+        <img src={product.image} className="w-24 h-24 object-contain" alt={product.name} />
       </div>
 
       <div className="flex-1 flex flex-col">
@@ -205,7 +205,7 @@ function CartPage() {
           <div className="space-y-4">
             {entries.map(({ product, qty }) => (
               <div key={product.id} className="flex items-center gap-4 bg-white p-4 rounded-xl shadow">
-                <img src="/headphones.svg" alt="" className="w-20 h-20 object-contain rounded-md" />
+                <img src={product.image} alt="" className="w-20 h-20 object-contain rounded-md" />
                 <div className="flex-1">
                   <div className="flex justify-between items-center">
                     <div>
